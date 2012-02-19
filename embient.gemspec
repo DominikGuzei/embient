@@ -14,13 +14,11 @@ Gem::Specification.new do |s|
   s.summary     = "Opinionated Ember.js environment and addons for Ruby on Rails"
   s.description = "Pulls together various existing ember/sproutcore addons and provides structure for future extensions."
 
-  s.files = %w(README.md) + Dir["lib/**/*", "vendor/assets/**/*"]
+  s.files = `git ls-files`.split("\n")
 
   s.require_paths = ["lib"]
 
   s.add_dependency "rails", ">= 3.1.0"
-  s.add_dependency "coffee-rails"
-  s.add_dependency "jquery-rails"
-  s.add_dependency "emberjs-rails"
+  s.add_dependency "ember-rails"
   
 end
