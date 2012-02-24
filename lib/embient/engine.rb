@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'ember-rails'
+require 'emberjs-rails'
 
 module Embient
   class Engine < ::Rails::Engine
