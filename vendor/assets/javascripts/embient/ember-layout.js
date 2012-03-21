@@ -123,7 +123,7 @@ Ember.LayoutState = Ember.State.extend({
     // the layoutStates property.
     var viewClass = get(this, 'viewClass');
     if(viewClass) {
-      var layoutStates = get(viewClass, 'proto').layoutStates;
+      var layoutStates = viewClass.proto().layoutStates;
       set(this, 'states', layoutStates);
     }
     
@@ -142,7 +142,6 @@ Ember.LayoutState = Ember.State.extend({
     
     if (view) {
       ember_assert('view must be an Ember.View', view instanceof Ember.View);
-
 
       // if there is another view in the hierarchy then
       // set its content
