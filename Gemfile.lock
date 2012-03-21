@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    embient (0.0.7)
+    embient (0.0.8)
       emberjs-rails
       rails (>= 3.1.0)
 
