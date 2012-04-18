@@ -1,134 +1,4 @@
 (function() {
-/*global __fail__*/
-/**
-  Define an assertion that will throw an exception if the condition is not
-  met.  Ember build tools will remove any calls to ember_assert() when
-  doing a production build.
-
-  ## Examples
-
-      #js:
-
-      // pass a simple Boolean value
-      ember_assert('must pass a valid object', !!obj);
-
-      // pass a function.  If the function returns false the assertion fails
-      // any other return value (including void) will pass.
-      ember_assert('a passed record must have a firstName', function() {
-        if (obj instanceof Ember.Record) {
-          return !Ember.empty(obj.firstName);
-        }
-      });
-
-  @static
-  @function
-  @param {String} desc
-    A description of the assertion.  This will become the text of the Error
-    thrown if the assertion fails.
-
-  @param {Boolean} test
-    Must return true for the assertion to pass.  If you pass a function it
-    will be executed.  If the function returns false an exception will be
-    thrown.
-*/
-window.ember_assert = function ember_assert(desc, test) {
-  if ('function' === typeof test) test = test()!==false;
-  if (!test) throw new Error("assertion failed: "+desc);
-};
-
-
-/**
-  Display a warning with the provided message. Ember build tools will
-  remove any calls to ember_warn() when doing a production build.
-
-  @static
-  @function
-  @param {String} message
-    A warning to display.
-
-  @param {Boolean} test
-    An optional boolean or function. If the test returns false, the warning
-    will be displayed.
-*/
-window.ember_warn = function(message, test) {
-  if (arguments.length === 1) { test = false; }
-  if ('function' === typeof test) test = test()!==false;
-  if (!test) console.warn("WARNING: "+message);
-};
-
-/**
-  Display a deprecation warning with the provided message and a stack trace
-  (Chrome and Firefox only). Ember build tools will remove any calls to
-  ember_deprecate() when doing a production build.
-
-  @static
-  @function
-  @param {String} message
-    A description of the deprecation.
-
-  @param {Boolean} test
-    An optional boolean or function. If the test returns false, the deprecation
-    will be displayed.
-*/
-window.ember_deprecate = function(message, test) {
-  if (Ember.TESTING_DEPRECATION) { return; }
-
-  if (arguments.length === 1) { test = false; }
-  if ('function' === typeof test) { test = test()!==false; }
-  if (test) { return; }
-
-  if (Ember.ENV.RAISE_ON_DEPRECATION) { throw new Error(message); }
-
-  var error, stackStr = '';
-
-  // When using new Error, we can't do the arguments check for Chrome. Alternatives are welcome
-  try { __fail__.fail(); } catch (e) { error = e; }
-
-  if (error.stack) {
-    var stack;
-
-    if (error['arguments']) {
-      // Chrome
-      stack = error.stack.replace(/^\s+at\s+/gm, '').
-                          replace(/^([^\(]+?)([\n$])/gm, '{anonymous}($1)$2').
-                          replace(/^Object.<anonymous>\s*\(([^\)]+)\)/gm, '{anonymous}($1)').split('\n');
-      stack.shift();
-    } else {
-      // Firefox
-      stack = error.stack.replace(/(?:\n@:0)?\s+$/m, '').
-                          replace(/^\(/gm, '{anonymous}(').split('\n');
-    }
-
-    stackStr = "\n    " + stack.slice(2).join("\n    ");
-  }
-
-  console.warn("DEPRECATION: "+message+stackStr);
-};
-
-
-
-/**
-  Display a deprecation warning with the provided message and a stack trace
-  (Chrome and Firefox only) when the wrapped method is called.
-
-  @static
-  @function
-  @param {String} message
-    A description of the deprecation.
-
-  @param {Function} func
-    The function to be deprecated.
-*/
-window.ember_deprecateFunc = function(message, func) {
-  return function() {
-    window.ember_deprecate(message);
-    return func.apply(this, arguments);
-  };
-};
-
-})();
-
-(function() {
 // lib/handlebars/base.js
 var Handlebars = {};
 
@@ -2010,7 +1880,7 @@ if (!platform.defineProperty) {
   platform.hasPropertyAccessors = false;
 
   platform.defineProperty = function(obj, keyName, desc) {
-    ember_assert("property descriptor cannot have `get` or `set` on this platform", !desc.get && !desc.set);
+
     obj[keyName] = desc.value;
   };
 
@@ -2438,7 +2308,6 @@ if (!USE_ACCESSORS) {
       obj = Ember;
     }
 
-    ember_assert("You need to provide an object and key to `get`.", !!obj && keyName);
 
     if (!obj) return undefined;
     var desc = meta(obj, false).descs[keyName];
@@ -2448,7 +2317,7 @@ if (!USE_ACCESSORS) {
 
   /** @private */
   set = function(obj, keyName, value) {
-    ember_assert("You need to provide an object and key to `set`.", !!obj && keyName !== undefined);
+
     var desc = meta(obj, false).descs[keyName];
     if (desc) desc.set(obj, keyName, value);
     else o_set(obj, keyName, value);
@@ -2524,7 +2393,7 @@ Ember.set = set;
 
 /** @private */
 function normalizePath(path) {
-  ember_assert('must pass non-empty string to normalizePath()', path && path!=='');
+
 
   if (path==='*') return path; //special case...
   var first = path.charAt(0);
@@ -2670,7 +2539,7 @@ Ember.getPath = function(root, path, _checkGlobal) {
   hasThis  = HAS_THIS.test(path);
 
   if (!root || hasThis || hasStar) {
-    ember_deprecate("Fetching globals with Ember.getPath is deprecated (root: "+root+", path: "+path+")", !root || root === window || !IS_GLOBAL.test(path));
+
 
     var tuple = normalizeTuple(root, path);
     root = tuple[0];
@@ -2681,7 +2550,7 @@ Ember.getPath = function(root, path, _checkGlobal) {
   ret = getPath(root, path);
 
   if (ret === undefined && !pathOnly && !hasThis && root !== window && IS_GLOBAL.test(path) && _checkGlobal !== false) {
-    ember_deprecate("Fetching globals with Ember.getPath is deprecated (root: "+root+", path: "+path+")");
+
     return Ember.getPath(window, path);
   } else {
     return ret;
@@ -2699,7 +2568,7 @@ Ember.setPath = function(root, path, value, tolerant) {
 
   path = normalizePath(path);
   if (path.indexOf('*')>0) {
-    ember_deprecate("Setting globals with Ember.setPath is deprecated (path: "+path+")", !root || root === window || !IS_GLOBAL.test(path));
+
 
     var tuple = normalizeTuple(root, path);
     root = tuple[0];
@@ -2714,7 +2583,7 @@ Ember.setPath = function(root, path, value, tolerant) {
       // Remove the `false` when we're done with this deprecation
       root = Ember.getPath(root, path, false);
       if (!root && IS_GLOBAL.test(path)) {
-        ember_deprecate("Setting globals with Ember.setPath is deprecated (path: "+path+")");
+
         root = Ember.getPath(window, path);
       }
     }
@@ -2913,16 +2782,16 @@ Dp.val = function(obj, keyName) {
 if (!USE_ACCESSORS) {
   Ember.Descriptor.MUST_USE_GETTER = function() {
     if (this instanceof Ember.Object) {
-      ember_assert('Must use Ember.get() to access this property', false);
+
     }
   };
 
   Ember.Descriptor.MUST_USE_SETTER = function() {
     if (this instanceof Ember.Object) {
       if (this.isDestroyed) {
-        ember_assert('You cannot set observed properties on destroyed objects', false);
+
       } else {
-        ember_assert('Must use Ember.set() to access this property', false);
+
       }
     }
   };
@@ -4658,7 +4527,7 @@ function invokeAction(action, params) {
   @memberOf Ember
 */
 function addListener(obj, eventName, target, method, xform) {
-  ember_assert("You must pass at least an object and event name to Ember.addListener", !!obj && !!eventName);
+
 
   if (!method && 'function' === typeof target) {
     method = target;
@@ -5248,7 +5117,7 @@ function findNamespaces() {
     }
 
     if (obj && get(obj, 'isNamespace')) {
-      ember_deprecate("Namespaces should not begin with lowercase.", /^[A-Z]/.test(prop));
+
       obj[NAME_KEY] = prop;
     }
   }
@@ -5631,7 +5500,7 @@ Ember.run.begin = function() {
   @returns {void}
 */
 Ember.run.end = function() {
-  ember_assert('must have a current run loop', run.currentRunLoop);
+
   try {
     run.currentRunLoop.end();
   }
@@ -6441,7 +6310,7 @@ Binding.prototype = /** @scope Ember.Binding.prototype */ {
     @returns {Ember.Binding} this
   */
   connect: function(obj) {
-    ember_assert('Must pass a valid object to Ember.Binding.connect()', !!obj);
+
 
     var oneWay = this._oneWay, operand = this._operand;
 
@@ -6471,7 +6340,7 @@ Binding.prototype = /** @scope Ember.Binding.prototype */ {
     @returns {Ember.Binding} this
   */
   disconnect: function(obj) {
-    ember_assert('Must pass a valid object to Ember.Binding.disconnect()', !!obj);
+
 
     var oneWay = this._oneWay, operand = this._operand;
 
@@ -7196,7 +7065,6 @@ function _copy(obj, deep, seen, copies) {
   // avoid cyclical loops
   if (deep && (loc=indexOf(seen, obj))>=0) return copies[loc];
 
-  ember_assert('Cannot clone an Ember.Object that does not implement Ember.Copyable', !(obj instanceof Ember.Object) || (Ember.Copyable && Ember.Copyable.detect(obj)));
 
   // IMPORTANT: this specific test will detect a native array only.  Any other
   // object will need to implement Copyable.
@@ -10344,7 +10212,6 @@ var ClassMixin = Ember.Mixin.create({
   metaForProperty: function(key) {
     var desc = meta(this.proto(), false).descs[key];
 
-    ember_assert("metaForProperty() could not find a computed property with key '"+key+"'.", !!desc && desc instanceof Ember.ComputedProperty);
     return desc._meta || {};
   },
 
@@ -10820,7 +10687,7 @@ Ember.Set = Ember.CoreObject.extend(Ember.MutableEnumerable, Ember.Copyable, Emb
 var o_create = Ember.Set.create;
 Ember.Set.create = function(items) {
   if (items && Ember.Enumerable.detect(items)) {
-    ember_deprecate('Passing an enumerable to Ember.Set.create() is deprecated and will be removed in a future version of Ember.  Use new Ember.Set(items) instead.');
+
     return new Ember.Set(items);
   } else {
     return o_create.apply(this, arguments);
@@ -11734,7 +11601,6 @@ Ember.ArrayController = Ember.ArrayProxy.extend();
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
 
-ember_assert("Ember requires jQuery 1.6 or 1.7", window.jQuery && window.jQuery().jquery.match(/^1\.[67](\.\d+)?(pre|rc\d?)?/));
 Ember.$ = window.jQuery;
 
 })();
@@ -12224,13 +12090,11 @@ Ember.EventDispatcher = Ember.Object.extend(
 
     var rootElement = Ember.$(get(this, 'rootElement'));
 
-    ember_assert(fmt('You cannot use the same root element (%@) multiple times in an Ember.Application', [rootElement.selector || rootElement[0].tagName]), !rootElement.is('.ember-application'));
-    ember_assert('You cannot make a new Ember.Application using a root element that is a descendent of an existing Ember.Application', !rootElement.closest('.ember-application').length);
-    ember_assert('You cannot make a new Ember.Application using a root element that is an ancestor of an existing Ember.Application', !rootElement.find('.ember-application').length);
+
+
 
     rootElement.addClass('ember-application');
 
-    ember_assert('Unable to add "ember-application" class to rootElement. Make sure you set rootElement to the body or an element in the body.', rootElement.is('.ember-application'));
 
     for (event in events) {
       if (events.hasOwnProperty(event)) {
@@ -13696,10 +13560,8 @@ Ember.View = Ember.Object.extend(Ember.Evented,
     // setup child views. be sure to clone the child views array first
     set(this, '_childViews', childViews);
 
-    ember_assert("Only arrays are allowed for 'classNameBindings'", Ember.typeOf(this.classNameBindings) === 'array');
     this.classNameBindings = Ember.A(this.classNameBindings.slice());
 
-    ember_assert("Only arrays are allowed for 'classNames'", Ember.typeOf(this.classNames) === 'array');
     this.classNames = Ember.A(this.classNames.slice());
 
     var viewController = get(this, 'viewController');
@@ -13844,7 +13706,7 @@ Ember.View = Ember.Object.extend(Ember.Evented,
       // consumers of the view API
       if (viewName) { set(get(this, 'concreteView'), viewName, view); }
     } else {
-      ember_assert('must pass instance of View', view instanceof Ember.View);
+
       set(view, '_parentView', this);
     }
 
@@ -14170,7 +14032,7 @@ Ember.View.states.inBuffer = {
   // when a view is rendered in a buffer, rerendering it simply
   // replaces the existing buffer with a new one
   rerender: function(view) {
-    ember_deprecate("Something you did caused a view to re-render after it rendered but before it was inserted into the DOM. Because this is avoidable and the cause of significant performance issues in applications, this behavior is deprecated. If you want to use the debugger to find out what caused this, you can set ENV.RAISE_ON_DEPRECATION to true.");
+
 
     view._notifyWillRerender();
 
@@ -14940,7 +14802,7 @@ Ember.CollectionView = Ember.ContainerView.extend(
     var content = get(this, 'content');
 
     if (content) {
-      ember_assert(fmt("an Ember.CollectionView's content must implement Ember.Array. You passed %@", [content]), Ember.Array.detect(content));
+
       content.addArrayObserver(this);
     }
 
@@ -15009,7 +14871,6 @@ Ember.CollectionView = Ember.ContainerView.extend(
       itemViewClass = Ember.getPath(itemViewClass);
     }
 
-    ember_assert(fmt("itemViewClass must be a subclass of Ember.View, not %@", [itemViewClass]), Ember.View.detect(itemViewClass));
 
     len = content ? get(content, 'length') : 0;
     if (len) {
@@ -15997,7 +15858,6 @@ Ember.ViewState = Ember.State.extend({
         set(this, 'view', view);
       }
 
-      ember_assert('view must be an Ember.View', view instanceof Ember.View);
 
       root = stateManager.get('rootView');
 
@@ -17011,7 +16871,7 @@ var EmberHandlebars = Ember.Handlebars, helpers = EmberHandlebars.helpers;
     @returns {String} HTML string
   */
   EmberHandlebars.registerHelper('_triageMustache', function(property, fn) {
-    ember_assert("You cannot pass more than one argument to the _triageMustache helper", arguments.length <= 2);
+
     if (helpers[property]) {
       return helpers[property].call(this, fn);
     }
@@ -17041,7 +16901,7 @@ var EmberHandlebars = Ember.Handlebars, helpers = EmberHandlebars.helpers;
     @returns {String} HTML string
   */
   EmberHandlebars.registerHelper('bind', function(property, fn) {
-    ember_assert("You cannot pass more than one argument to the bind helper", arguments.length <= 2);
+
 
     var context = (fn.contexts && fn.contexts[0]) || this;
 
@@ -17085,8 +16945,8 @@ var EmberHandlebars = Ember.Handlebars, helpers = EmberHandlebars.helpers;
   @returns {String} HTML string
 */
 EmberHandlebars.registerHelper('with', function(context, options) {
-  ember_assert("You must pass exactly one argument to the with helper", arguments.length === 2);
-  ember_assert("You must pass a block to the with helper", options.fn && options.fn !== Handlebars.VM.noop);
+
+
 
   return helpers.bind.call(options.contexts[0], context, options);
 });
@@ -17099,8 +16959,8 @@ EmberHandlebars.registerHelper('with', function(context, options) {
   @returns {String} HTML string
 */
 EmberHandlebars.registerHelper('if', function(context, options) {
-  ember_assert("You must pass exactly one argument to the if helper", arguments.length === 2);
-  ember_assert("You must pass a block to the if helper", options.fn && options.fn !== Handlebars.VM.noop);
+
+
 
   return helpers.boundIf.call(options.contexts[0], context, options);
 });
@@ -17112,8 +16972,8 @@ EmberHandlebars.registerHelper('if', function(context, options) {
   @returns {String} HTML string
 */
 EmberHandlebars.registerHelper('unless', function(context, options) {
-  ember_assert("You must pass exactly one argument to the unless helper", arguments.length === 2);
-  ember_assert("You must pass a block to the unless helper", options.fn && options.fn !== Handlebars.VM.noop);
+
+
 
   var fn = options.fn, inverse = options.inverse;
 
@@ -17137,7 +16997,6 @@ EmberHandlebars.registerHelper('bindAttr', function(options) {
 
   var attrs = options.hash;
 
-  ember_assert("You must specify at least one hash argument to bindAttr", !!Ember.keys(attrs).length);
 
   var view = options.data.view;
   var ret = [];
@@ -17163,12 +17022,10 @@ EmberHandlebars.registerHelper('bindAttr', function(options) {
   forEach(attrKeys, function(attr) {
     var property = attrs[attr];
 
-    ember_assert(fmt("You must provide a String for a bound attribute, not %@", [property]), typeof property === 'string');
 
     var value = (property === 'this') ? ctx : getPath(ctx, property, options),
         type = Ember.typeOf(value);
 
-    ember_assert(fmt("Attributes must be numbers, strings or booleans, not %@", [value]), value === null || value === undefined || type === 'number' || type === 'string' || type === 'boolean');
 
     var observer, invoker;
 
@@ -17176,7 +17033,6 @@ EmberHandlebars.registerHelper('bindAttr', function(options) {
     observer = function observer() {
       var result = getPath(ctx, property, options);
 
-      ember_assert(fmt("Attributes must be numbers, strings or booleans, not %@", [result]), result === null || result === undefined || typeof result === 'number' || typeof result === 'string' || typeof result === 'boolean');
 
       var elem = view.$("[data-bindattr-" + dataId + "='" + dataId + "']");
 
@@ -17397,7 +17253,7 @@ EmberHandlebars.ViewHelper = Ember.Object.create({
     }
 
     if (hash.attributeBindings) {
-      ember_assert("Setting 'attributeBindings' via Handlebars is not allowed. Please subclass Ember.View and set it there instead.");
+
       extensions.attributeBindings = null;
       dup = true;
     }
@@ -17451,12 +17307,11 @@ EmberHandlebars.ViewHelper = Ember.Object.create({
 
     if ('string' === typeof path) {
       newView = EmberHandlebars.getPath(thisContext, path, options);
-      ember_assert("Unable to find view at path '" + path + "'", !!newView);
+
     } else {
       newView = path;
     }
 
-    ember_assert(Ember.String.fmt('You must pass a view class to the #view helper, not %@ (%@)', [path, newView]), Ember.View.detect(newView));
 
     newView = this.viewClassFromHTMLOptions(newView, options, thisContext);
     var currentView = data.view;
@@ -17465,7 +17320,7 @@ EmberHandlebars.ViewHelper = Ember.Object.create({
     };
 
     if (fn) {
-      ember_assert("You cannot provide a template block if you also specified a templateName", !get(viewOptions, 'templateName') && !get(newView.proto(), 'templateName'));
+
       viewOptions.template = fn;
     }
 
@@ -17480,7 +17335,7 @@ EmberHandlebars.ViewHelper = Ember.Object.create({
   @returns {String} HTML string
 */
 EmberHandlebars.registerHelper('view', function(path, options) {
-  ember_assert("The view helper only takes a single argument", arguments.length <= 2);
+
 
   // If no path is provided, treat path param as options.
   if (path && path.data && path.data.isRenderData) {
@@ -17620,9 +17475,9 @@ Ember.Handlebars.registerHelper('collection', function(path, options) {
   if (path && path.data && path.data.isRenderData) {
     options = path;
     path = undefined;
-    ember_assert("You cannot pass more than one argument to the collection helper", arguments.length === 1);
+
   } else {
-    ember_assert("You cannot pass more than one argument to the collection helper", arguments.length === 2);
+
   }
 
   var fn = options.fn;
@@ -17633,7 +17488,7 @@ Ember.Handlebars.registerHelper('collection', function(path, options) {
   // Otherwise, just default to the standard class.
   var collectionClass;
   collectionClass = path ? getPath(this, path, options) : Ember.CollectionView;
-  ember_assert(fmt("%@ #collection: Could not find %@", data.view, path), !!collectionClass);
+
 
   var hash = options.hash, itemHash = {}, match;
 
@@ -17642,7 +17497,7 @@ Ember.Handlebars.registerHelper('collection', function(path, options) {
   var collectionPrototype = collectionClass.proto();
   delete hash.itemViewClass;
   itemViewClass = itemViewPath ? getPath(collectionPrototype, itemViewPath, options) : collectionPrototype.itemViewClass;
-  ember_assert(fmt("%@ #collection: Could not find %@", data.view, itemViewPath), !!itemViewClass);
+
 
   // Go through options passed to the {{collection}} helper and extract options
   // that configure item views instead of the collection itself.
@@ -17821,7 +17676,6 @@ Ember.Handlebars.registerHelper('each', function(path, options) {
 Ember.Handlebars.registerHelper('template', function(name, options) {
   var template = Ember.TEMPLATES[name];
 
-  ember_assert("Unable to find template with name '"+name+"'.", !!template);
 
   Ember.TEMPLATES[name](this, { data: options.data });
 });
@@ -18044,7 +17898,6 @@ Ember.Handlebars.registerHelper('yield', function(options) {
     view = get(view, 'parentView');
   }
 
-  ember_assert("You called yield in a template that was not a layout", !!view);
 
   template = get(view, 'template');
 
@@ -18139,7 +17992,7 @@ Ember.Checkbox = Ember.View.extend({
   disabled: false,
 
   title:  Ember.computed(function(propName, value){
-    ember_deprecate("Automatically surrounding Ember.Checkbox inputs with a label by providing a 'title' property is deprecated", value === undefined);
+
     return value;
   }).property().cacheable(),
 
@@ -18152,7 +18005,7 @@ Ember.Checkbox = Ember.View.extend({
   }).property().cacheable(),
 
   value: Ember.computed(function(propName, value){
-    ember_deprecate("Ember.Checkbox's 'value' property has been renamed to 'checked' to match the html element attribute name");
+
     if (value !== undefined) {
       return set(this, 'checked', value);
     } else {
@@ -18654,7 +18507,6 @@ Ember.Handlebars.bootstrap = function(ctx) {
 
   if (Ember.ENV.LEGACY_HANDLEBARS_TAGS) { selectors += ', script[type="text/html"]'; }
 
-  ember_warn("Ember no longer parses text/html script tags by default. Set ENV.LEGACY_HANDLEBARS_TAGS = true to restore this functionality.", Ember.ENV.LEGACY_HANDLEBARS_TAGS || Ember.$('script[type="text/html"]').length === 0);
 
   Ember.$(selectors, ctx)
     .each(function() {
@@ -18734,15 +18586,6 @@ Ember.$(document).ready(
 (function() {
 // ==========================================================================
 // Project:   Ember Handlebar Views
-// Copyright: ©2011 Strobe Inc. and contributors.
-// License:   Licensed under MIT license (see license.js)
-// ==========================================================================
-
-})();
-
-(function() {
-// ==========================================================================
-// Project:   Ember
 // Copyright: ©2011 Strobe Inc. and contributors.
 // License:   Licensed under MIT license (see license.js)
 // ==========================================================================
